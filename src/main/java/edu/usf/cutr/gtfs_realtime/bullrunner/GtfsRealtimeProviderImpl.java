@@ -630,7 +630,7 @@ public class GtfsRealtimeProviderImpl {
 	}
 	private void extractHeading (String route) throws IOException, JSONException{
 		int routeID = _providerConfig.routesMap.get(route);	
-		
+	
 		String urlStr = ""+ "http://usfbullrunner.com/route/"+ routeID+"/vehicles";
 		JSONArray jsonVehicle = _providerConfig.downloadCofiguration(new URL( urlStr ));
 		
