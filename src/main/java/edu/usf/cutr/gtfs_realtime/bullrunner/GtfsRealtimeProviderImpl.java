@@ -70,6 +70,7 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import com.google.transit.realtime.GtfsRealtime.VehicleDescriptor;
 import com.google.transit.realtime.GtfsRealtime.VehiclePosition;
+import com.google.transit.realtime.GtfsRealtime.VehiclePosition.OccupancyStatus;
 
 import java.net.URL;
 
@@ -443,8 +444,9 @@ public class GtfsRealtimeProviderImpl {
 						String vehicleId = child.getString("VehicleId");	
 						if (!routeVehiDirMap.containsKey(route))						
 							extractHeading(route);
+
 						vehicleInfo info = tripVehicleInfoMap.get(route, vehicleId);
-						 
+						
 						//_log.info("vehicles' info: " + info); 
 						bearing = info.bearing;
 						
@@ -455,6 +457,12 @@ public class GtfsRealtimeProviderImpl {
 						VehiclePosition.Builder vehiclePosition = VehiclePosition.newBuilder();
 						vehiclePosition.setPosition(position);
 						vehiclePosition.setTrip(tripDescriptor);
+
+						if (info.APCPercentage <= 0) vehiclePosition.setOccupancyStatus( VehiclePosition.OccupancyStatus.EMPTY );
+						else if (info.APCPercentage >= 95) vehiclePosition.setOccupancyStatus( VehiclePosition.OccupancyStatus.FULL );
+						else if (info.APCPercentage <= 50) vehiclePosition.setOccupancyStatus( VehiclePosition.OccupancyStatus.MANY_SEATS_AVAILABLE );
+						else vehiclePosition.setOccupancyStatus( VehiclePosition.OccupancyStatus.FEW_SEATS_AVAILABLE );
+
 						vehicleDescriptor = VehicleDescriptor.newBuilder();
 						vehicleDescriptor.setId(vehicleId);
 						
@@ -627,6 +635,7 @@ public class GtfsRealtimeProviderImpl {
 	    public float lat;
 	    public float longi;
 	    public float bearing;
+	    public int APCPercentage;
 	}
 	private void extractHeading (String route) throws IOException, JSONException{
 		int routeID = _providerConfig.routesMap.get(route);	
@@ -647,6 +656,8 @@ public class GtfsRealtimeProviderImpl {
 			info.lat = (float) coordinate.getDouble("Latitude");
 			info.longi = (float) coordinate.getDouble("Longitude");
 			info.bearing = direction;
+
+			info.APCPercentage = child.getInt("APCPercentage");
 			 
 			tripVehicleInfoMap.put(route, vehicleID, info);		 
 		}
